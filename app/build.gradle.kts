@@ -2,6 +2,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -64,6 +66,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     implementation("com.kakao.sdk:v2-user:2.20.3") // 카카오 로그인 API 모듈
+
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
