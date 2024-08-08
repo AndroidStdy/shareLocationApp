@@ -1,5 +1,6 @@
 package fastcampus.part2.sharelocationapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
@@ -17,7 +18,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         var keyHash = Utility.getKeyHash(this)
+        println(keyHash)
         Log.e("KeyHash", keyHash.toString())
+
+        startActivity(Intent(this,LoginActivity::class.java))
 
 
     }
