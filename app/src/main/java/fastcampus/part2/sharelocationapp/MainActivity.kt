@@ -1,8 +1,10 @@
 package fastcampus.part2.sharelocationapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.kakao.sdk.common.util.Utility
 import fastcampus.part2.sharelocationapp.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -13,5 +15,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        var keyHash = Utility.getKeyHash(this)
+        Log.e("KeyHash", keyHash.toString())
+
+
     }
 }

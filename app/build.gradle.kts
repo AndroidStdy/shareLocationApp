@@ -1,9 +1,19 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
+//    todo 버전 수정
+//    signingConfigs {
+//        debug {
+//            storeFile file("fastcampus.keystore")
+//            storePassword = "android"
+//            keyAlias = "androiddebug"
+//            keyPassword = "android"
+//        }
+//    }
     namespace = "fastcampus.part2.sharelocationapp"
     compileSdk = 34
 
@@ -19,6 +29,13 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -45,6 +62,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+
+    implementation("com.kakao.sdk:v2-user:2.20.3") // 카카오 로그인 API 모듈
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
