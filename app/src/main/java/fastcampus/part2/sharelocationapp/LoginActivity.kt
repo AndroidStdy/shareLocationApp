@@ -166,7 +166,7 @@ class LoginActivity : AppCompatActivity() {
             .addOnFailureListener {
                 //이미 가입된 계정
                 if (it is FirebaseAuthUserCollisionException) {
-                    Firebase.auth.createUserWithEmailAndPassword(email, uId)
+                    Firebase.auth.signInWithEmailAndPassword(email, uId)
                         .addOnCompleteListener { result ->
                             if (result.isSuccessful) {
                                 // 다음과정
