@@ -28,6 +28,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -40,12 +41,13 @@ import com.google.firebase.database.database
 import com.kakao.sdk.common.util.Utility
 import fastcampus.part2.sharelocationapp.databinding.ActivityMapBinding
 
-class MapActivity : AppCompatActivity(), OnMapReadyCallback {
+class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private lateinit var binding: ActivityMapBinding
     private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    private var trackingPersonId: String = ""
     private val markerMap = hashMapOf<String, Marker>()
 
     private val locationPermissionRequest = registerForActivityResult(
@@ -179,12 +181,22 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     val uid = person.uid ?: return
 
 
-
                     if (markerMap[uid] == null) {
                         markerMap[uid] = makeNewMarker(person, uid) ?: return
                     } else {
                         markerMap[uid]?.position =
                             LatLng(person.latitude ?: 0.0, person.longitude ?: 0.0)
+                    }
+
+                    if(uid == trackingPersonId){
+                        googleMap.animateCamera(
+                            CameraUpdateFactory.newCameraPosition(
+                                CameraPosition.Builder()
+                                    .target(LatLng(person.latitude ?: 0.0, person.longitude ?: 0.0))
+                                    .zoom(16.0f)
+                                    .build()
+                            )
+                        )
                     }
 
                 }
@@ -206,6 +218,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 .position(LatLng(person.latitude ?: 0.0, person.longitude ?: 0.0))
                 .title(person.name.orEmpty())
         ) ?: return null
+
+        marker.tag = uid
 
         Glide.with(this).asBitmap()
             .load(person.profilePhoto)
@@ -253,6 +267,17 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap.setMaxZoomPreference(20.0f)
         googleMap.setMinZoomPreference(10.0f)
 
+        googleMap.setOnMarkerClickListener(this)
+        googleMap.setOnMapClickListener {
+            trackingPersonId = ""
+        }
 
+    }
+
+    override fun onMarkerClick(marker: Marker): Boolean {
+
+        trackingPersonId = marker.tag as? String ?: ""
+
+        return false    //true: 마커 클릭 시, 해당 마커로 이동X | false: 마커 클릭 시, 해당 마커로 이동O
     }
 }
