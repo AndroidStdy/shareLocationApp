@@ -69,6 +69,8 @@ dependencies {
     implementation("com.kakao.sdk:v2-user:2.20.3") // 카카오 로그인 API 모듈
 
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
 
     implementation("com.google.android.gms:play-services-maps:18.2.0")
 
