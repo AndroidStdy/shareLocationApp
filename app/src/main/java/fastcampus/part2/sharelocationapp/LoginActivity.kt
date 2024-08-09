@@ -11,6 +11,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.auth
 import com.google.firebase.database.database
+import com.kakao.sdk.auth.AuthApiClient
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.model.ClientError
@@ -44,6 +45,21 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         KakaoSdk.init(this, "6b2bac974648bb5227345068077793de")
+
+//        if(AuthApiClient.instance.hasToken()){
+//            UserApiClient.instance.accessTokenInfo{ tokenInfo, error ->
+//                if(error == null){
+//                    getKaKaoAccountInfo()
+//                }
+//
+//            }
+//        }
+
+        /* Firebase에 로그인 되어있을 시 로그인 절차 skip
+        if(Firebase.auth.currentUser != null){
+            navigateToMapActivity()
+        }*/
+
 
         emailLoginResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
             if(it.resultCode == RESULT_OK){
@@ -145,8 +161,6 @@ class LoginActivity : AppCompatActivity() {
                 if (it.isSuccessful) {
                     //다음과정
                     updateFirebaseDatabase(user)
-                } else {
-                    showErrorToast()
                 }
             }
             .addOnFailureListener {

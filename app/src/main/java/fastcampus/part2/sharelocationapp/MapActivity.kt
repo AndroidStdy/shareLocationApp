@@ -22,6 +22,12 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.database
 import com.kakao.sdk.common.util.Utility
 import fastcampus.part2.sharelocationapp.databinding.ActivityMapBinding
 
@@ -30,6 +36,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityMapBinding
     private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private val markerMap = hashMapOf<String, Marker>()
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -44,7 +52,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 // coarse location 권한이 있는 상태
                 getCurrentLocation()
             }
-            else->{
+
+            else -> {
                 // TODO 설정으로 보내기 or 교육용 팝업을 띄워서 다시 권한 요청하기
             }
         }
@@ -56,12 +65,20 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             //새로 요청된 위치 정보
             for (location in locationResult.locations) {
 
-                Log.e("MapActivity", "onLocationResult : ${location.latitude} ${location.longitude}")
+                Log.e(
+                    "MapActivity",
+                    "onLocationResult : ${location.latitude} ${location.longitude}"
+                )
 
-                location.latitude
-                location.longitude
+                val uid = Firebase.auth.currentUser?.uid.orEmpty()
+
+
+                val locationMap = mutableMapOf<String, Any>()
+                locationMap["latitude"] = location.latitude
+                locationMap["longitude"] = location.longitude
+                Firebase.database.reference.child("Person").child(uid).updateChildren(locationMap)
+
             }
-
         }
     }
 
@@ -78,15 +95,20 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         requestLocationPermission()
+        setupFirebaseDatabase()
 
     }
 
     override fun onResume() {
         super.onResume()
+
+        getCurrentLocation()
     }
 
     override fun onPause() {
         super.onPause()
+
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     private fun getCurrentLocation() {
@@ -111,6 +133,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             locationCallback,
             Looper.getMainLooper()
         )
+
+        fusedLocationClient.lastLocation.addOnSuccessListener {
+            googleMap.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(LatLng(it.latitude, it.longitude), 16.0f)
+            )
+        }
     }
 
     private fun requestLocationPermission() {
@@ -123,16 +151,63 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+    private fun setupFirebaseDatabase() {
+        Firebase.database.reference.child("Person")
+            .addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    val person = snapshot.getValue(Person::class.java) ?: return
+                    val uid = person.uid ?: return
+
+                    if (markerMap[uid] == null) {
+                        markerMap[uid] = makeNewMarker(person, uid) ?: return
+                    }
+
+
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                    val person = snapshot.getValue(Person::class.java) ?: return
+                    val uid = person.uid ?: return
+
+
+
+                    if (markerMap[uid] == null) {
+                        markerMap[uid] = makeNewMarker(person, uid) ?: return
+                    } else {
+                        markerMap[uid]?.position =
+                            LatLng(person.latitude ?: 0.0, person.longitude ?: 0.0)
+                    }
+
+                }
+
+                override fun onChildRemoved(snapshot: DataSnapshot) {
+
+                }
+
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+
+                override fun onCancelled(error: DatabaseError) {}
+
+            })
+    }
+
+    private fun makeNewMarker(person: Person, uid: String): Marker?{
+        val marker = googleMap.addMarker(
+            MarkerOptions()
+                .position(LatLng(person.latitude ?: 0.0, person.longitude ?: 0.0))
+                .title(person.name.orEmpty())
+        ) ?: return null
+
+        return marker
+
+    }
+
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
 
-        val sydney = LatLng(-34.0, 151.0)
-        googleMap.addMarker(
-            MarkerOptions()
-                .position(sydney)
-                .title("Marker is Sydney")
-        )
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        googleMap.setMaxZoomPreference(20.0f)
+        googleMap.setMinZoomPreference(10.0f)
+
 
     }
 }
