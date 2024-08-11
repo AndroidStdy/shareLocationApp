@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.database.ChildEventListener
@@ -104,6 +105,22 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
         mapFragment.getMapAsync(this)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        binding.emojiLottieAnimationView.setOnClickListener {
+
+            if (trackingPersonId != "") {
+                val lastEmoji = mutableMapOf<String, Any>()
+                lastEmoji["type"] = "smile"
+                lastEmoji["lastModifier"] = System.currentTimeMillis()
+                Firebase.database.reference.child("Emoji").child(trackingPersonId)
+                    .updateChildren(lastEmoji)
+
+            }
+
+            binding.emojiLottieAnimationView.playAnimation()
+
+
+        }
 
         requestLocationPermission()
         setupFirebaseDatabase()
@@ -188,7 +205,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                             LatLng(person.latitude ?: 0.0, person.longitude ?: 0.0)
                     }
 
-                    if(uid == trackingPersonId){
+                    if (uid == trackingPersonId) {
                         googleMap.animateCamera(
                             CameraUpdateFactory.newCameraPosition(
                                 CameraPosition.Builder()
@@ -277,6 +294,9 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
     override fun onMarkerClick(marker: Marker): Boolean {
 
         trackingPersonId = marker.tag as? String ?: ""
+
+        val bottomSheetBehavior = BottomSheetBehavior.from(binding.emojiBottomSheetLayout)
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
 
         return false    //true: 마커 클릭 시, 해당 마커로 이동X | false: 마커 클릭 시, 해당 마커로 이동O
     }
