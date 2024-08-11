@@ -38,6 +38,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.kakao.sdk.common.util.Utility
 import fastcampus.part2.sharelocationapp.databinding.ActivityMapBinding
@@ -106,23 +107,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        binding.emojiLottieAnimationView.setOnClickListener {
-
-            if (trackingPersonId != "") {
-                val lastEmoji = mutableMapOf<String, Any>()
-                lastEmoji["type"] = "smile"
-                lastEmoji["lastModifier"] = System.currentTimeMillis()
-                Firebase.database.reference.child("Emoji").child(trackingPersonId)
-                    .updateChildren(lastEmoji)
-
-            }
-
-            binding.emojiLottieAnimationView.playAnimation()
-
-
-        }
-
         requestLocationPermission()
+        setupEmojiAnimationView()
         setupFirebaseDatabase()
 
     }
@@ -179,6 +165,39 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
 
     }
 
+    private fun setupEmojiAnimationView() {
+        binding.emojiLottieAnimationView.setOnClickListener {
+
+            if (trackingPersonId != "") {
+                val lastEmoji = mutableMapOf<String, Any>()
+                lastEmoji["type"] = "smile"
+                lastEmoji["lastModifier"] = System.currentTimeMillis()
+                Firebase.database.reference.child("Emoji").child(trackingPersonId)
+                    .updateChildren(lastEmoji)
+
+            }
+
+            binding.emojiLottieAnimationView.playAnimation()
+
+            binding.dummyLottieAnimationView.animate()
+                .scaleX(3f)
+                .scaleY(3f)
+                .alpha(0f)
+                .withStartAction{
+                    binding.dummyLottieAnimationView.scaleX = 1f
+                    binding.dummyLottieAnimationView.scaleY = 1f
+                    binding.dummyLottieAnimationView.alpha = 1f
+                }.withEndAction {
+                    binding.dummyLottieAnimationView.scaleX = 1f
+                    binding.dummyLottieAnimationView.scaleY = 1f
+                    binding.dummyLottieAnimationView.alpha = 1f
+                }.start()
+
+        }
+        binding.emojiLottieAnimationView.speed = 3f
+        binding.centerLottieAnimationView.speed = 3f
+    }
+
     private fun setupFirebaseDatabase() {
         Firebase.database.reference.child("Person")
             .addChildEventListener(object : ChildEventListener {
@@ -223,6 +242,27 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerC
                 }
 
                 override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+
+                override fun onCancelled(error: DatabaseError) {}
+
+            })
+
+        Firebase.database.reference.child("Emoji").child(Firebase.auth.currentUser?.uid ?: "")
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    binding.centerLottieAnimationView.playAnimation()
+
+                    binding.centerLottieAnimationView.animate()
+                        .scaleX(7f)
+                        .scaleY(7f)
+                        .alpha(0.3f)
+                        .setDuration(binding.centerLottieAnimationView.duration / 3)
+                        .withEndAction {
+                            binding.centerLottieAnimationView.scaleX = 0f
+                            binding.centerLottieAnimationView.scaleY = 0f
+                            binding.centerLottieAnimationView.alpha = 1f
+                        }.start()
+                }
 
                 override fun onCancelled(error: DatabaseError) {}
 
